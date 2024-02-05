@@ -1,31 +1,44 @@
 #!/usr/bin/python3
-""" 0-gather_data_from_an_API
-
-    Given employee ID, returns information
-    about his/her todo list progress.
-"""
+"""API extraer información ficticia"""
 import requests
-import sys
+from sys import argv
 
 
 def main():
-    """According to user_id, show information
-    """
-    user_id = sys.argv[1]
-    user = 'https://jsonplaceholder.typicode.com/users/{}'.format(user_id)
-    todos = 'https://jsonplaceholder.typicode.com/todos/?userId={}'.format(
-        user_id)
-    name = requests.get(user).json().get('name')
-    request_todo = requests.get(todos).json()
-    tasks = [task.get('title')
-             for task in request_todo if task.get('completed') is True]
+    """Consultamos el nombre y las tareas de un empleado."""
+    if len(argv) > 1 and argv[1].isdigit():
+        id = argv[1]
 
-    print('Employee {} is done with tasks({}/{}):'.format(name,
-                                                          len(tasks),
-                                                          len(request_todo)))
-    print('\n'.join('\t {}'.format(task) for task in tasks))
+        url_id = f"https://jsonplaceholder.typicode.com/users/{id}"
+        url_todos = f"https://jsonplaceholder.typicode.com/users/{id}/todos"
+
+        try:
+            response = requests.get(url_id)
+
+            if response.status_code == 200:
+                data = response.json()
+                EMPLOYEE_NAME = data['name']
+
+            response = requests.get(url_todos)
+
+            if response.status_code == 200:
+                todos = response.json()
+
+                total_task = sum(1 for todo in todos if todo['completed'])
+
+                NUMBER_OF_DONE_TASKS = total_task
+                TOTAL_NUMBER_OF_TASKS = len(todos)
+                text = f"Employee {EMPLOYEE_NAME} is done with "\
+                    f"tasks({NUMBER_OF_DONE_TASKS}/{TOTAL_NUMBER_OF_TASKS}):"
+
+                print(text)
+                for todo in todos:
+                    if todo['completed']:
+                        print(f'\t {todo["title"]}')
+
+        except requests.exceptions.HTTPError as e:
+            print(f"Error de solictud: {e}")
 
 
-if __name__ == "__main__":
-    if len(sys.argv) == 2:
-        main()
+if __name__ == '__main__':
+    main()
